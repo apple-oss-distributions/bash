@@ -462,6 +462,7 @@ termsig_handler (sig)
      int sig;
 {
   static int handling_termsig = 0;
+  sigset_t allsigs;
 
   /* Simple semaphore to keep this function from being executed multiple
      times.  Since we no longer are running as a signal handler, we don't
@@ -475,6 +476,12 @@ termsig_handler (sig)
   if (sig == SIGINT && signal_is_trapped (SIGINT))
     run_interrupt_trap ();
 
+    // Unblock all signals and reset the handlers before calling maybe_save_shell_history
+    sigfillset(&allsigs);
+    sigprocmask(SIG_UNBLOCK, &allsigs, NULL);
+    for (int _sig = 1; _sig < NSIG; _sig++) {
+        set_signal_handler (_sig, SIG_DFL);
+    }
 #if defined (HISTORY)
   if (interactive_shell && sig != SIGABRT)
     maybe_save_shell_history ();
